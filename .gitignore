@@ -1,0 +1,18 @@
+# Salidas de simulación de ngspice
+*.raw
+*.log
+*.out
+
+# Archivos temporales de extracción de Magic
+*.ext
+*.sim
+*.nodes
+
+# Respaldos de Xschem y Netgen
+*.sch.bak
+comp.out
+
+# Archivos de sistema y Python
+__pycache__/
+*.pyc
+.DS_Store
