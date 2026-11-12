@@ -1,0 +1,70 @@
+* Protocolo de Simulacion Multi-Esquina y PVT - ADC SAR 8 bits SKY130A
+.option temp=27
+.param vdd_val=1.8
+
+* Cargar esquina inicial (se sobreescribe en el bloque .control)
+.lib /home/juan/.volare/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+
+* Incluir netlist del bloque o top-level exportada desde Xschem
+.include ../schematics/top/adc_sar_top.spice
+
+* Fuentes de alimentacion parametrizadas
+Vdd VDD 0 {vdd_val}
+Vss VSS 0 0
+
+.control
+  set wr_singlescale
+  set wr_vecnames
+
+  * 1. Simulacion Nominal (tt, 1.8V, 27C)
+  echo "=== CORRIENDO NOMINAL: tt, 1.8V, 27C ==="
+  alterparam vdd_val = 1.8
+  set temp = 27
+  reset
+  op
+  print v(vcm) i(Vdd) > pvt_results/op_nominal.txt
+  tran 100p 1.2u
+  wrdata pvt_results/tran_nom_tt.txt v(vin) v(vtop) v(cmp) v(eoc)
+
+  * 2. Matriz PVT en Esquinas Criticas (HV-hot, HV-cold, LV-hot, LV-cold)
+  foreach corner tt ss ff sf fs
+    * Cargar libreria de esquina
+    unlet all
+    destroy all
+    
+    * HV - hot (1.95V, 85C)
+    echo "=== ESQUINA: $corner | HV-hot (1.95V, 85C) ==="
+    alterparam vdd_val = 1.95
+    set temp = 85
+    reset
+    tran 200p 1.2u
+    meas tran pwr_hv_hot AVG par('-v(VDD)*i(Vdd)') from=0.1u to=1.1u
+    wrdata pvt_results/tran_{$corner}_HV_hot.txt v(vtop) v(cmp) v(eoc)
+
+    * HV - cold (1.95V, -40C)
+    echo "=== ESQUINA: $corner | HV-cold (1.95V, -40C) ==="
+    alterparam vdd_val = 1.95
+    set temp = -40
+    reset
+    tran 200p 1.2u
+    wrdata pvt_results/tran_{$corner}_HV_cold.txt v(vtop) v(cmp) v(eoc)
+
+    * LV - hot (1.62V, 85C) -> Peor caso de velocidad
+    echo "=== ESQUINA: $corner | LV-hot (1.62V, 85C) ==="
+    alterparam vdd_val = 1.62
+    set temp = 85
+    reset
+    tran 200p 1.2u
+    meas tran t_dec WHEN v(cmp)=0.81 CROSS=1 TD=0.15u
+    wrdata pvt_results/tran_{$corner}_LV_hot.txt v(vtop) v(cmp) v(eoc)
+
+    * LV - cold (1.62V, -40C) -> Peor caso de Vth
+    echo "=== ESQUINA: $corner | LV-cold (1.62V, -40C) ==="
+    alterparam vdd_val = 1.62
+    set temp = -40
+    reset
+    tran 200p 1.2u
+    wrdata pvt_results/tran_{$corner}_LV_cold.txt v(vtop) v(cmp) v(eoc)
+  end
+.endc
+.end

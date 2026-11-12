@@ -802,3 +802,8 @@ set XSCHEM_START_WINDOW ${PDK_ROOT}/${PDK}/libs.tech/xschem/sky130_tests/top.sch
 if { [info exists ::env(XSCHEM_USER_LIBRARY_PATH) ] } {
     append XSCHEM_LIBRARY_PATH :$env(XSCHEM_USER_LIBRARY_PATH)
 }
+
+# Rutas del PDK SKY130A y librerías del proyecto ADCMOS
+set PDK_ROOT $env(PDK_ROOT)
+set PDK $env(PDK)
+set XSCHEM_LIBRARY_PATH "$XSCHEM_SHAREDIR/xschem_library:$PDK_ROOT/$PDK/libs.tech/xschem:$env(PWD)/schematics"
