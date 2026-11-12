@@ -1,0 +1,30 @@
+* Simulacion Monte Carlo de Desajuste (tt_mm) - ADC SAR 8 bits SKY130A
+.option temp=27
+.param mc_mm_switch=1
+
+* Cargar seccion tt_mm que activa las variaciones estadisticas de Pelgrom en MOS y MIM
+.lib /home/juan/.volare/sky130A/libs.tech/ngspice/sky130.lib.spice tt_mm
+.include /home/juan/.volare/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice
+
+* Incluir netlist del bloque a evaluar (B1, B2 o Top)
+.include ../schematics/top/adc_sar_top.spice
+
+Vdd VDD 0 1.8
+Vss VSS 0 0
+
+.control
+  let run = 1
+  let num_runs = 100
+  set wr_singlescale
+
+  dowhile run <= num_runs
+    echo "=== Monte Carlo Run: $&run / $&num_runs ==="
+    reset
+    tran 200p 1.2u
+    * Guardar desplazamiento de Vtop al final de la conversion para calcular DNL/INL/offset
+    meas tran vtop_end FIND v(vtop) AT=0.95u
+    echo "$&run $&vtop_end" >> pvt_results/mc_tt_mm_summary.txt
+    let run = run + 1
+  end
+.endc
+.end

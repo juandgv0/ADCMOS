@@ -1,9 +1,10 @@
-* Protocolo de Simulacion Multi-Esquina y PVT - ADC SAR 8 bits SKY130A
+* Protocolo de Simulacion Multi-Esquina y PVT - ADC SAR 8 bits SKY130A (v0.2)
 .option temp=27
 .param vdd_val=1.8
 
-* Cargar esquina inicial (se sobreescribe en el bloque .control)
+* Esquina por defecto (el script bash reemplaza esta linea para barrer tt, ss, ff, sf, fs, ss_hh, ff_ll)
 .lib /home/juan/.volare/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+.include /home/juan/.volare/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice
 
 * Incluir netlist del bloque o top-level exportada desde Xschem
 .include ../schematics/top/adc_sar_top.spice
@@ -16,55 +17,53 @@ Vss VSS 0 0
   set wr_singlescale
   set wr_vecnames
 
-  * 1. Simulacion Nominal (tt, 1.8V, 27C)
-  echo "=== CORRIENDO NOMINAL: tt, 1.8V, 27C ==="
+  * 1. Punto de Operacion y Transitorio Nominal (tt, 1.8V, 27C)
+  * Verifica Vcm ~ 0.6 V (VREF/2), consumo del divisor (~3 uA) y parametros Vth
+  echo "=== CORRIENDO NOMINAL: 1.8V, 27C ==="
   alterparam vdd_val = 1.8
   set temp = 27
   reset
   op
   print v(vcm) i(Vdd) > pvt_results/op_nominal.txt
+  show m > pvt_results/mos_op_vth.txt
   tran 100p 1.2u
-  wrdata pvt_results/tran_nom_tt.txt v(vin) v(vtop) v(cmp) v(eoc)
+  wrdata pvt_results/tran_nom.txt v(vin) v(vtop) v(cmp) v(eoc)
 
-  * 2. Matriz PVT en Esquinas Criticas (HV-hot, HV-cold, LV-hot, LV-cold)
-  foreach corner tt ss ff sf fs
-    * Cargar libreria de esquina
-    unlet all
-    destroy all
-    
-    * HV - hot (1.95V, 85C)
-    echo "=== ESQUINA: $corner | HV-hot (1.95V, 85C) ==="
-    alterparam vdd_val = 1.95
-    set temp = 85
-    reset
-    tran 200p 1.2u
-    meas tran pwr_hv_hot AVG par('-v(VDD)*i(Vdd)') from=0.1u to=1.1u
-    wrdata pvt_results/tran_{$corner}_HV_hot.txt v(vtop) v(cmp) v(eoc)
+  * 2. Matriz PVT: HV-hot, HV-cold, LV-hot, LV-cold
+  * HV - hot (1.95V, 85C) -> Peor caso de potencia y fugas
+  echo "=== PVT: HV-hot (1.95V, 85C) ==="
+  alterparam vdd_val = 1.95
+  set temp = 85
+  reset
+  tran 200p 1.2u
+  meas tran pwr_hv_hot AVG par('-v(VDD)*i(Vdd)') from=0.1u to=1.1u
+  wrdata pvt_results/tran_HV_hot.txt v(vtop) v(cmp) v(eoc)
 
-    * HV - cold (1.95V, -40C)
-    echo "=== ESQUINA: $corner | HV-cold (1.95V, -40C) ==="
-    alterparam vdd_val = 1.95
-    set temp = -40
-    reset
-    tran 200p 1.2u
-    wrdata pvt_results/tran_{$corner}_HV_cold.txt v(vtop) v(cmp) v(eoc)
+  * HV - cold (1.95V, -40C) -> Peor caso de sobretension SOA (<= 1.95V) y kickback
+  echo "=== PVT: HV-cold (1.95V, -40C) ==="
+  alterparam vdd_val = 1.95
+  set temp = -40
+  reset
+  tran 200p 1.2u
+  meas tran max_vtop_soa MAX v(vtop)
+  meas tran min_vtop_soa MIN v(vtop)
+  wrdata pvt_results/tran_HV_cold.txt v(vtop) v(cmp) v(eoc)
 
-    * LV - hot (1.62V, 85C) -> Peor caso de velocidad
-    echo "=== ESQUINA: $corner | LV-hot (1.62V, 85C) ==="
-    alterparam vdd_val = 1.62
-    set temp = 85
-    reset
-    tran 200p 1.2u
-    meas tran t_dec WHEN v(cmp)=0.81 CROSS=1 TD=0.15u
-    wrdata pvt_results/tran_{$corner}_LV_hot.txt v(vtop) v(cmp) v(eoc)
+  * LV - hot (1.62V, 85C) -> Peor caso de velocidad (asentamiento CDAC y comparador)
+  echo "=== PVT: LV-hot (1.62V, 85C) ==="
+  alterparam vdd_val = 1.62
+  set temp = 85
+  reset
+  tran 200p 1.2u
+  meas tran t_dec WHEN v(cmp)=0.81 CROSS=1 TD=0.15u
+  wrdata pvt_results/tran_LV_hot.txt v(vtop) v(cmp) v(eoc)
 
-    * LV - cold (1.62V, -40C) -> Peor caso de Vth
-    echo "=== ESQUINA: $corner | LV-cold (1.62V, -40C) ==="
-    alterparam vdd_val = 1.62
-    set temp = -40
-    reset
-    tran 200p 1.2u
-    wrdata pvt_results/tran_{$corner}_LV_cold.txt v(vtop) v(cmp) v(eoc)
-  end
+  * LV - cold (1.62V, -40C) -> Peor caso de Vth alto en compuertas de transmision
+  echo "=== PVT: LV-cold (1.62V, -40C) ==="
+  alterparam vdd_val = 1.62
+  set temp = -40
+  reset
+  tran 200p 1.2u
+  wrdata pvt_results/tran_LV_cold.txt v(vtop) v(cmp) v(eoc)
 .endc
 .end
