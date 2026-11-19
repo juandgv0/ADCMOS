@@ -1,0 +1,58 @@
+Resultados Monte Carlo B2 (tt_mm, 25°C, N=50/50)
+----------------------------------------------------
+Media (mu_os)    : -1.211 mV
+Sigma (sigma_os) : 2.596 mV  (Meta: <= 1.000 mV)
+3*sigma          : 7.789 mV  (0.5 LSB = 2.344 mV)
+Rango [min, max] : [-7.23 mV, +4.27 mV]
+
+Corridas individuales (mV):
+run_00: +4.2656 mV
+run_01: +1.2708 mV
+run_02: +3.3612 mV
+run_03: -2.7331 mV
+run_04: -2.2418 mV
+run_05: -5.2169 mV
+run_06: -2.2321 mV
+run_07: -4.7193 mV
+run_08: -2.2160 mV
+run_09: -7.2293 mV
+run_10: -3.7331 mV
+run_11: +0.7669 mV
+run_12: -0.2342 mV
+run_13: -6.7332 mV
+run_14: -1.7386 mV
+run_15: -1.2244 mV
+run_16: -0.7304 mV
+run_17: +0.2588 mV
+run_18: -1.7327 mV
+run_19: +0.7573 mV
+run_20: -3.5514 mV
+run_21: -1.7335 mV
+run_22: -0.2394 mV
+run_23: -0.7357 mV
+run_24: +1.2602 mV
+run_25: -6.2208 mV
+run_26: -0.1898 mV
+run_27: +1.2644 mV
+run_28: -1.7384 mV
+run_29: +3.2819 mV
+run_30: -1.7331 mV
+run_31: -0.2215 mV
+run_32: +1.2871 mV
+run_33: +0.2571 mV
+run_34: -0.7265 mV
+run_35: -1.7021 mV
+run_36: -0.1518 mV
+run_37: +3.2559 mV
+run_38: -1.2396 mV
+run_39: -0.7298 mV
+run_40: -3.7246 mV
+run_41: +0.2627 mV
+run_42: +1.2713 mV
+run_43: -3.7293 mV
+run_44: -5.6518 mV
+run_45: -0.6987 mV
+run_46: -3.7298 mV
+run_47: +0.7680 mV
+run_48: -3.2331 mV
+run_49: +0.2711 mV
